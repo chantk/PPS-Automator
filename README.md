@@ -1,4 +1,4 @@
-Idea comes from [lihkg](s://lihkg.com/thread/1637669/)
+Idea comes from [lihkg](https://lihkg.com/thread/1637669/)
 
 This program help you pay your bill one dollar each time on the pps webpage.
 
