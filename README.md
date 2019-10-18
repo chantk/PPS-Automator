@@ -26,6 +26,7 @@ python3 main.py
 
 ### Todo
 
+- [x] Add Mac support
 - [ ] Migrate to QT5
 - [ ] Auto download browser drivers
 - [ ] Add support to firefox
