@@ -2,6 +2,7 @@ import os, sys, random, time, selenium, tkinter
 from tkinter import *
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException
 
 class Window(Frame):
 
@@ -34,6 +35,7 @@ pathBox.pack(side=LEFT)
 L2 = Label(row2_frame, text='Merchant Type')
 L2.pack(side=LEFT)
 merchantTypeBox = Entry(row2_frame, bd=1, width=5)
+merchantTypeBox.insert(0, "24")
 merchantTypeBox.pack(side=LEFT)
 L2 = Label(row2_frame, text='Bill no.')
 L2.pack(side=LEFT)
@@ -43,6 +45,7 @@ L3 = Label(row3_frame, text='Amount to pay')
 L3.grid(row=2, column=0)
 L3.pack(side=LEFT)
 amountBox = Entry(row3_frame, bd=1)
+amountBox.insert(0, "30")
 amountBox.pack(side=LEFT)
 L4 = Label(row4_frame, text='Amount paid: ')
 L4.grid(row=3, column=0)
@@ -56,7 +59,7 @@ instructionText.insert(END, '3. This script only works with PPS bank transfer, n
 instructionText.pack(side='bottom')
 instructionText.configure(state=DISABLED)
 
-def pay_loop(path, billType, billCodfe, targetAmount):
+def pay_loop(path, billType, billCode, targetAmount):
     driver = webdriver.Chrome(executable_path=path)
     billLink = "confirmPayment('" + str(billType) + "',billAlias" + str(billType) + str(billCode) + ",'" + str(billCode) + "','N')"
     totalAmountPaid = 0
@@ -70,14 +73,39 @@ def pay_loop(path, billType, billCodfe, targetAmount):
     while totalAmountPaid < targetAmount:
         driver.execute_script(billLink)
         print('clicked')
-        amountPay = driver.find_element_by_name('AMOUNT')
-        amountPay.click()
         paidAmount = random.randint(101, 110) / 100
         totalAmountPaid = totalAmountPaid + paidAmount
-        amountPay.send_keys(str(paidAmount))
         print('amount paid: ' + str(totalAmountPaid))
-        driver.execute_script('confirmSubmit()')
-        driver.execute_script('confirmSubmit()')
+        while 1:
+            amountPay = driver.find_element_by_name('AMOUNT')
+            amountPay.click()
+            amountPay.send_keys(str(paidAmount))
+            try:
+                captcha_pic = driver.find_element_by_id('exampleCaptchaTag_CaptchaDiv')
+            except NoSuchElementException:
+                driver.execute_script('confirmSubmit()')
+                driver.execute_script('confirmSubmit()')
+                break
+            submit_btn = driver.find_element_by_name("proceedBut")
+            captcha_input = driver.find_element_by_id('captchaCode')
+            captcha = input("Enter CAPTCHA and Press ENTER\n")
+            captcha_input.send_keys(captcha)
+            submit_btn.click()
+            try:
+                close_btn = driver.find_element_by_name("closeBut")
+                print("CAPTCHA is wrong twice. Quitting...")
+                driver.close()
+            except NoSuchElementException:
+                print("")
+            try:
+                # The captcha is shown again if user got it wrong last time
+                captcha_pic = driver.find_element_by_id('exampleCaptchaTag_CaptchaDiv')
+            except NoSuchElementException:
+                print("You got the CAPTCHA right. Start payment again!")
+                # Only 1 confirmSubmit() is needed after captcha
+                driver.execute_script('confirmSubmit()')
+                break
+                
         while 1:
             URL = driver.current_url
             if URL == 'https://www.ppshk.com/pps/AppPayBill':
